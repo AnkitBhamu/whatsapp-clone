@@ -1,0 +1,9 @@
+.chat-container {
+  background-image: URL("../Assets/Rectangle.svg");
+  background-size: contain;
+}
+.chat-main {
+  background: linear-gradient(to right, rgba(255, 255, 255, 60%) 0 100%),
+    url("../Assets/login_background.png");
+  background-size: contain;
+}

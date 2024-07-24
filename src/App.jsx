@@ -1,13 +1,26 @@
-import Chat from "./Components/Chat";
-import Chats from "./Components/Chats";
+import CheckUserLogin from "./Components/CheckUserLogin";
+import ConnectToServer from "./Components/ConnectToServer";
+import Login from "./Components/Login";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {
+  // return <ConnectToServer />;
   return (
-    <div className="grid grid-cols-[375px_1fr] pl-5 w-screen max-sm:grid-cols-[1fr]">
-      <Chats />
-      <Chat />
-      {/* <div>Hello world!!</div> */}
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route exact path="/" Component={Login}></Route>
+        <Route
+          exact
+          path="/user"
+          Component={() => (
+            <CheckUserLogin>
+              <ConnectToServer />
+            </CheckUserLogin>
+          )}
+        />
+        <Route exact path="/login" Component={Login} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

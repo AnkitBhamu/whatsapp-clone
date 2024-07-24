@@ -1,0 +1,6 @@
+.login-main {
+  background: linear-gradient(to right, rgba(255, 255, 255, 40%) 0 100%),
+    url("../Assets/login_background.png");
+  /* filter: opacity(0.25); */
+  background-size: contain;
+}
