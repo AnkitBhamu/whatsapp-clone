@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
+import "../styles/VideoCall.css";
+import {
+  CallEnd,
+  Videocam,
+  KeyboardVoiceRounded,
+  Call,
+} from "@mui/icons-material";
 
 export default function VideoCall() {
   //   let [actiontype, setaction] = useState("");
@@ -19,7 +26,7 @@ export default function VideoCall() {
   async function setUserMedia() {
     let stream = await navigator.mediaDevices.getUserMedia({
       video: true,
-      //   audio: true,
+      // audio: true,
     });
 
     let myvideo_element = document.querySelector(".myvideo");
@@ -36,6 +43,7 @@ export default function VideoCall() {
     async function setStream() {
       stream = await setUserMedia();
       p2pconnection.addTrack(stream.getVideoTracks()[0], stream);
+      // p2pconnection.addTrack(stream.getAudioTracks()[0], stream);
       console.log("p2pconnection is intiliased with tracks and media...");
     }
     setStream();
@@ -43,7 +51,7 @@ export default function VideoCall() {
 
   console.log("rendered!!!");
 
-  let socket = io("http://192.168.1.11:9000", {
+  let socket = io("http://localhost:9000", {
     auth: {
       mobile: "7073430939",
     },
@@ -56,7 +64,6 @@ export default function VideoCall() {
 
     // create a video-offer
     let video_offer = await p2pconnection.createOffer();
-    console.log("video offer is : ", video_offer);
 
     // if found our icecandidate then report to server this is always called after setting local desc
     p2pconnection.onicecandidate = (event) => {
@@ -88,7 +95,6 @@ export default function VideoCall() {
     await p2pconnection.addIceCandidate(video_offer.icecandidate);
 
     let video_answer = await p2pconnection.createAnswer();
-    console.log("video Answer is : ", video_answer);
 
     // if found our icecandidate then report to server
     p2pconnection.onicecandidate = (event) => {
@@ -118,16 +124,9 @@ export default function VideoCall() {
     }
   });
 
-  // socket.on("ice-candidate", async (ice_cand) => {
-  //   console.log("we got the ice candidate from server.. : ");
-  //   console.log("setting ice candidate...");
-  //   await p2pconnection.addIceCandidate(ice_cand);
-  //   console.log("ice candidate added!!");
-  // });
-
   socket.on("video-answer", async (video_answer) => {
     console.log("we got the video_answer from server.. : ");
-    if (first_offer == true) {
+    if (first_offer === true) {
       first_offer = false;
       await p2pconnection.setRemoteDescription(video_answer.videoanswer);
       await p2pconnection.addIceCandidate(video_answer.icecandidate);
@@ -139,21 +138,21 @@ export default function VideoCall() {
   });
 
   p2pconnection.addEventListener("track", (event) => {
-    console.log("new track is added to the connection line!!", event);
+    console.log("new track is added to the connection line!!");
     let myfriend_element = document.querySelector(".friend-video");
-    console.log("track is : ", event);
-    let mstream = new MediaStream([event.track]);
+    let alternate = document.querySelector(".alternate");
+    alternate.style.display = "none";
+    myfriend_element.style.display = "inline";
     myfriend_element.srcObject = event.streams[0];
 
     myfriend_element.addEventListener("loadedmetadata", () => {
-      console.log("came here!!");
       myfriend_element.play();
     });
   });
 
   async function globalsetup(actiontype) {
     let stream = await setUserMedia();
-    if (actiontype == "offer") setupConnectionOffer(stream);
+    if (actiontype === "offer") setupConnectionOffer(stream);
     else {
       setupConnectionAnswer(stream);
     }
@@ -164,19 +163,49 @@ export default function VideoCall() {
     // globalsetup();
   }, []);
   return (
-    <div className="w-screen h-screen relative">
-      <video className="friend-video  border-[1px] border-[red] h-full object-cover absolute"></video>
-      <div className="h-full w-full relative">
+    <div className="w-screen h-screen relative flex flex-col justify-end items-center bg-[#1e1d1d]">
+      <video className="hidden friend-video w-screen h-screen object-cover absolute"></video>
+      <div className="alternate absolute w-screen h-screen flex justify-center items-center">
+        <div className="call-container rounded-full border-white border flex justify-center items-center">
+          <div className="w-28 h-28 rounded-full bg-green-700 text-white font-bold flex justify-center items-center">
+            <Call
+              className="call-icon"
+              style={{ width: "56px", height: "56px" }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-5 pb-5">
         <button
           onClick={() => {
             globalsetup("offer");
           }}
-          className="absolute left-20 bg-[red] w-10 h-5 rounded-xl bottom-5 z-20"
+          className="bg-[white] w-12 h-12 rounded-full z-20 flex justify-center items-center text-black"
         >
-          Call
+          <Videocam />
+        </button>
+
+        <button
+          onClick={() => {
+            globalsetup("offer");
+          }}
+          className="bg-[red] w-12 h-12 rounded-full z-20 flex justify-center items-center text-white"
+        >
+          <CallEnd />
+        </button>
+
+        <button
+          onClick={() => {
+            console.log("clicked on it!!");
+          }}
+          className="bg-[white] w-12 h-12 rounded-full z-20 flex justify-center items-center text-black"
+        >
+          <KeyboardVoiceRounded />
         </button>
       </div>
-      <video className="bottom-2 right-2 myvideo border-[1px] border-[red] h-60 w-60  object-cover absolute"></video>
+
+      <video className=" w-[200px] h-[200px] bottom-2 right-2 myvideo object-cover absolute"></video>
     </div>
   );
 }

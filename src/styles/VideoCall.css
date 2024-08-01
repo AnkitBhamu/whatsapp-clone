@@ -1,0 +1,34 @@
+
+
+.call-container{
+    animation: callanimation 1s infinite;
+}
+
+@keyframes callanimation {
+    0%{
+        width: 112px;
+        height: 112px;
+    }
+
+    100%{
+        width: 150px;
+        height: 150px;
+    }
+    
+}
+
+
+.call-icon{
+    animation: calliconanimation 1s infinite;
+}
+
+@keyframes calliconanimation {
+    0%{
+        transform: rotate(0deg);
+    }
+
+    100%{
+        transform: rotate(-20deg);
+    }
+    
+}
