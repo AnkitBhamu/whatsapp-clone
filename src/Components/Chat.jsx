@@ -8,11 +8,14 @@ import { servercontext } from "./SocketContext";
 import { getCookie } from "react-use-cookie";
 import NoChatSelected from "./NoChatSelected";
 import { msgStore } from "./Msgstore";
+import Videocall from "./VideoCall";
+import { useNavigate } from "react-router-dom";
 
 export default function Chat(props) {
   let server_sock = useContext(servercontext);
   let [msgs, setmsgs, addmsg] = useContext(msgStore);
   let myNumber = useMemo(() => JSON.parse(getCookie("user-details")).mobile);
+  let navigate = useNavigate();
 
   function sendMessage() {
     let msg = document.querySelector(".msg_box").value;
@@ -62,7 +65,15 @@ export default function Chat(props) {
             </div>
 
             <div className="flex grow gap-4 pr-3 justify-end items-center h-20">
-              <img src={video_call} className="w-[24px]" alt="" />
+              <img
+                src={video_call}
+                className="w-[24px]"
+                alt=""
+                onClick={() => {
+                  props.setAction("offer");
+                  props.video_call_init(true);
+                }}
+              />
               <img src={audio_call} className="w-[20px]" alt="" />
             </div>
           </div>

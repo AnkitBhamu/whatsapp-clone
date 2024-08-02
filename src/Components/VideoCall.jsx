@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import "../styles/VideoCall.css";
 import {
@@ -7,21 +7,22 @@ import {
   KeyboardVoiceRounded,
   Call,
 } from "@mui/icons-material";
+import { servercontext } from "./SocketContext";
 
-export default function VideoCall() {
-  //   let [actiontype, setaction] = useState("");
-  let video_offer;
-  let client_ice_candidate;
-  let first_answer = true;
-  let first_offer = true;
-  let stream;
-  let p2pconnection = new RTCPeerConnection({
-    iceServers: [
-      {
-        urls: "stun:stun.l.google.com:19302",
-      },
-    ],
-  });
+export default function VideoCall(props) {
+  console.log("action type is : ", props.action_type);
+  console.log("video offer is :", props.video_offers);
+  let person_to_call = props.person;
+  let server_sock = useContext(servercontext);
+  let [p2pconnection, setp2pconnection] = useState(
+    new RTCPeerConnection({
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302",
+        },
+      ],
+    })
+  );
 
   async function setUserMedia() {
     let stream = await navigator.mediaDevices.getUserMedia({
@@ -40,22 +41,38 @@ export default function VideoCall() {
   }
 
   useEffect(() => {
-    async function setStream() {
-      stream = await setUserMedia();
-      p2pconnection.addTrack(stream.getVideoTracks()[0], stream);
+    let temp_stream;
+    async function initialise_things() {
+      temp_stream = await setUserMedia();
+      p2pconnection.addTrack(temp_stream.getVideoTracks()[0], temp_stream);
       // p2pconnection.addTrack(stream.getAudioTracks()[0], stream);
       console.log("p2pconnection is intiliased with tracks and media...");
+      globalsetup(props.action_type, temp_stream);
     }
-    setStream();
+    initialise_things();
+
+    return () => {
+      console.log("Cleaning up the things....");
+      p2pconnection.close();
+      temp_stream.getTracks().forEach(function (track) {
+        track.stop();
+      });
+    };
   }, []);
 
-  console.log("rendered!!!");
+  async function globalsetup(actiontype, stream) {
+    if (actiontype === "offer") setupConnectionOffer(stream);
+    else {
+      setupConnectionAnswer(props.video_offers);
+    }
+  }
 
-  let socket = io("http://localhost:9000", {
-    auth: {
-      mobile: "7073430939",
-    },
-  });
+  console.log("person to call is : ", person_to_call);
+  let video_offer;
+  let first_answer = true;
+  let first_offer = true;
+
+  console.log("rendered!!!");
 
   async function setupConnectionOffer(stream) {
     p2pconnection.onicecandidateerror = (event) => {
@@ -72,7 +89,7 @@ export default function VideoCall() {
         console.log(
           "We found the ice candidate sending complete offer to server.."
         );
-        socket.emit("video-offer", {
+        server_sock.emit("video-offer", {
           videooffer: video_offer,
           icecandidate: event.candidate,
         });
@@ -92,7 +109,7 @@ export default function VideoCall() {
 
     // create a video-offer
     await p2pconnection.setRemoteDescription(vid_offer.videooffer);
-    await p2pconnection.addIceCandidate(video_offer.icecandidate);
+    await p2pconnection.addIceCandidate(vid_offer.icecandidate);
 
     let video_answer = await p2pconnection.createAnswer();
 
@@ -103,7 +120,7 @@ export default function VideoCall() {
         console.log(
           "We found the ice candidate sending complete answer  to server.."
         );
-        socket.emit("video-answer", {
+        server_sock.emit("video-answer", {
           videoanswer: video_answer,
           icecandidate: event.candidate,
         });
@@ -115,16 +132,16 @@ export default function VideoCall() {
   }
 
   //got the offer from the other clients
-  socket.on("offers", async (vid_offers) => {
-    console.log("We got video_offers from server..");
-    video_offer = vid_offers;
-    if (first_answer) {
-      await setupConnectionAnswer(video_offer);
-      console.log("offer accepted!!");
-    }
-  });
+  // server_sock.on("offers", async (vid_offers) => {
+  //   console.log("We got video_offers from server..");
+  //   video_offer = vid_offers;
+  //   if (first_answer) {
+  //     await setupConnectionAnswer(video_offer);
+  //     console.log("offer accepted!!");
+  //   }
+  // });
 
-  socket.on("video-answer", async (video_answer) => {
+  server_sock.on("video-answer", async (video_answer) => {
     console.log("we got the video_answer from server.. : ");
     if (first_offer === true) {
       first_offer = false;
@@ -150,18 +167,6 @@ export default function VideoCall() {
     });
   });
 
-  async function globalsetup(actiontype) {
-    let stream = await setUserMedia();
-    if (actiontype === "offer") setupConnectionOffer(stream);
-    else {
-      setupConnectionAnswer(stream);
-    }
-  }
-
-  // user's video call initilisation
-  useEffect(() => {
-    // globalsetup();
-  }, []);
   return (
     <div className="w-screen h-screen relative flex flex-col justify-end items-center bg-[#1e1d1d]">
       <video className="hidden friend-video w-screen h-screen object-cover absolute"></video>
@@ -188,7 +193,7 @@ export default function VideoCall() {
 
         <button
           onClick={() => {
-            globalsetup("offer");
+            props.video_call_init(false);
           }}
           className="bg-[red] w-12 h-12 rounded-full z-20 flex justify-center items-center text-white"
         >
