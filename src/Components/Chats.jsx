@@ -20,6 +20,14 @@ export default function Chats(props) {
     setmsgs({ ...msgs });
   }
 
+  function unread_shortner(input) {
+    if (input > 100) {
+      return "100+";
+    } else {
+      return input;
+    }
+  }
+
   return (
     <div className="h-screen pr-[3px] overflow-hidden">
       <div className=" font-myfont text-black font-bold text-[40px] h-20 flex items-center justify-between pr-2">
@@ -77,15 +85,15 @@ export default function Chats(props) {
                     : null}
                 </div>
               </div>
-              <div className="flex gap-2 pr-2">
+              <div className="flex justify-between pr-2">
                 <div className="text-[#8E8E93] font-myfont mb-3 max-h-[60px] line-clamp-2">
                   {item[1].msgs.length > 0
                     ? item[1].msgs[item[1].msgs.length - 1].msg
                     : "Start a new chat"}
                 </div>
                 {item[1].unread ? (
-                  <div className="bg-[#1DAB61] flex items-center justify-center font-myfont text-white w-20 h-5 rounded-[5px]">
-                    <div>{item[1].unread}</div>
+                  <div className="bg-[#1DAB61] max-w-12 rounded-full flex items-center justify-center font-myfont text-white w-20 h-5">
+                    <div>{unread_shortner(item[1].unread)}</div>
                   </div>
                 ) : null}
               </div>
